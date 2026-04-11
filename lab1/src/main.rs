@@ -68,6 +68,39 @@ impl Add<LongNatural> for LongNatural {
     }
 }
 
+impl Sub<LongNatural> for LongNatural {
+    type Output = LongInteger;
+
+    fn sub(mut self, mut rhs: LongNatural) -> Self::Output {
+        if self == rhs { LongInteger::zero() }
+        else {
+            let mut res = LongInteger::zero();
+            if self < rhs {
+                res.sign = true;
+                (self, rhs) = (rhs, self);
+            }
+            let mut borrow = false;
+            for i in 0..self.digits.len().max(rhs.digits.len()) {
+                let a = {
+                    if i >= self.digits.len() { 0u64 }
+                    else { self.digits[i] }
+                };
+                let b = {
+                    if i >= rhs.digits.len() { 0u64 }
+                    else { rhs.digits[i] }
+                };
+                let (diff, b_flag) = a.borrowing_sub(b, borrow);
+                borrow = b_flag;
+                res.abs.digits.push(diff);
+            }
+            while res.abs.digits.len() > 0 && res.abs.digits.last() == Some(&0) {
+                res.abs.digits.pop();
+            }
+            res
+        }
+    }
+}
+
 impl Mul<u64> for LongNatural {
     type Output = LongNatural;
     fn mul(self, rhs: u64) -> Self::Output {
@@ -86,8 +119,8 @@ impl Mul<u64> for LongNatural {
 impl Mul<LongNatural> for LongNatural {
     type Output = LongNatural;
     fn mul(self, rhs: LongNatural) -> Self::Output {
-        if self.is_zero() || rhs.is_zero() { 
-            LongNatural::zero() 
+        if self.is_zero() || rhs.is_zero() {
+            LongNatural::zero()
         }
         else if self.digits.len() == 1 { rhs * self.digits[0] }
         else if rhs.digits.len() == 1 { self * rhs.digits[0] }
@@ -129,37 +162,45 @@ impl LongInteger {
     fn as_nat(self) -> LongNatural {
         self.abs
     }
+
+    pub fn is_zero(&self) -> bool {
+        return self.abs.is_zero();
+    }
 }
 
-impl Sub<LongNatural> for LongNatural {
-    type Output = LongInteger;
+impl PartialEq for LongInteger {
+    fn eq(&self, other: &Self) -> bool {
+        self.sign == other.sign && self.abs == other.abs
+    }
+}
 
-    fn sub(mut self, mut rhs: LongNatural) -> Self::Output {
-        if self == rhs { LongInteger::zero() }
-        else {
-            let mut res = LongInteger::zero();
-            if self < rhs {
-                res.sign = true;
-                (self, rhs) = (rhs, self);
+impl PartialOrd for LongInteger {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        if self.sign && other.sign {
+            match self.abs.partial_cmp(&other.abs) {
+                Some(Ordering::Equal) => Some(Ordering::Equal),
+                Some(Ordering::Greater) => Some(Ordering::Less),
+                Some(Ordering::Less) => Some(Ordering::Greater),
+                None => panic!("ytgjyznyj xnj")
             }
-            let mut borrow = false;
-            for i in 0..self.digits.len().max(rhs.digits.len()) {
-                let a = {
-                    if i >= self.digits.len() { 0u64 }
-                    else { self.digits[i] }
-                };
-                let b = {
-                    if i >= rhs.digits.len() { 0u64 }
-                    else { rhs.digits[i] }
-                };
-                let (diff, b_flag) = a.borrowing_sub(b, borrow);
-                borrow = b_flag;
-                res.abs.digits.push(diff);
-            }
-            while res.abs.digits.len() > 0 && res.abs.digits.last() == Some(&0) {
-                res.abs.digits.pop();
-            }
-            res
+        } else if self.sign && !other.sign{
+            Some(Ordering::Greater)
+        } else if !self.sign && other.sign {
+            Some(Ordering::Less)
+        } else {
+            self.abs.partial_cmp(&other.abs)
+        }
+    }
+}
+
+impl Sub<LongInteger> for LongInteger {
+    type Output = Self;
+    fn sub(self, rhs: LongInteger) -> Self::Output {
+        if rhs.is_zero() {
+            self
+        } else {
+            let rhs = LongInteger{sign: !rhs.sign, abs: rhs.abs};
+            self + rhs
         }
     }
 }
