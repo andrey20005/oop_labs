@@ -3,8 +3,14 @@ from typing import Self
 class LongNatural:
     def __init__(self, digits: str):
         self.digits = digits.lstrip('0') or '0'
+
+    def __str__(self) -> str:
+        return self.digits
     
-    def __add__(self, other: Self):
+    def is_zero(self) -> bool:
+        return self.digits == "" or self.digits == "0"
+    
+    def __add__(self, other: Self) -> Self:
         carry = 0
         res = ""
         for i in range(0, max(len(self.digits), len(other.digits))):
@@ -17,7 +23,7 @@ class LongNatural:
             res = str(carry) + res
         return LongNatural(res)
     
-    def __sub__(self, other):
+    def __sub__(self, other: Self) -> Self:
         # исходим из того что self больше
         borrow = 0
         res = ""
@@ -31,14 +37,7 @@ class LongNatural:
             else:
                 borrow = 0
             res = str(diff) + res
-        res = res.lstrip('0') or '0'
         return LongNatural(res.lstrip('0') or '0')
-    
-    def is_zero(self):
-        return self.digits == "" or self.digits == "0"
-
-    def __str__(self):
-        return self.digits
 
     def __mul__(self, other: Self) -> Self:
         if self.is_zero() or other.is_zero():
@@ -101,6 +100,23 @@ class LongNatural:
     
     def __ge__(self, other):
         return other <= self
+    
+    def __floordiv__(self, other: Self) -> Self:
+        low, high = LongNatural("1"), self
+        mids = []
+        while len(mids) <= 2 or mids[-2] != mids[-1]:
+            mid = LongNatural(((low + high + LongNatural("0")) * LongNatural("5")).digits[:-1])
+            mids.append(mid)
+            prod = mid * other
+            if prod <= self:
+                low = mid 
+            else:
+                high = mid 
+        return mids[-1] 
+    
+    def __mod__(self, other: Self) -> Self:
+        return self - self // other * other
+
 
 class LongInteger:
     def __init__(self, s: str):
@@ -127,6 +143,9 @@ class LongInteger:
     def __sub__(self, other: Self) -> Self:
         return self + LongInteger({"": "-", "-": ""}[other.sign] + other.abs.digits)
     
+    def __mul__(self, other: Self) -> Self:
+        return LongInteger(("-" if (self.sign == "-") != (other.sign == "-") else "") + (self.abs * other.abs).digits)
+    
     def is_zero(self) -> bool:
         return self.abs.is_zero()
     
@@ -147,61 +166,60 @@ class LongInteger:
     
     def __gt__(self, other: Self) -> bool:
         return other <= self
-
-def run_tests():
-    print("--- Запуск тестов ---")
     
-    # Тесты LongNatural
-    print("\n[LongNatural Tests]")
+    def __floordiv__(self, other: Self) -> Self:
+        q_abs = self.abs // other.abs
+        r_abs = self.abs % other.abs
+        
+        signs_differ = (self.sign == "-") ^ (other.sign == "-")
+        
+        if signs_differ:
+            if r_abs.is_zero():
+                result_digits = q_abs.digits if not q_abs.is_zero() else "0"
+                return LongInteger("-" + result_digits if result_digits != "0" else "0")
+            else:
+                q_abs = q_abs + LongNatural("1")
+                result_digits = q_abs.digits if not q_abs.is_zero() else "0"
+                return LongInteger("-" + result_digits if result_digits != "0" else "0")
+        else:
+            return LongInteger(q_abs.digits)
     
-    # Сложение
-    assert str(LongNatural("123") + LongNatural("456")) == "579", "Fail: 123+456"
-    assert str(LongNatural("999") + LongNatural("1")) == "1000", "Fail: 999+1 carry"
-    assert str(LongNatural("0") + LongNatural("0")) == "0", "Fail: 0+0"
-    print("OK: Addition")
-    
-    # Вычитание
-    assert str(LongNatural("500") - LongNatural("200")) == "300", "Fail: 500-200"
-    assert str(LongNatural("1000") - LongNatural("1")) == "999", "Fail: 1000-1 borrow"
-    print("OK: Subtraction")
-    
-    # Умножение
-    assert str(LongNatural("12") * LongNatural("12")) == "144", "Fail: 12*12"
-    assert str(LongNatural("123456") * LongNatural("789")) == "97406784", "Fail: Karatsuba large"
-    assert str(LongNatural("0") * LongNatural("100")) == "0", "Fail: Zero mult"
-    print("OK: Multiplication")
-    
-    # Сравнение
-    assert (LongNatural("100") > LongNatural("99")), "Fail: length compare"
-    assert (LongNatural("123") < LongNatural("124")), "Fail: digit compare"
-    assert (LongNatural("007") == LongNatural("7")), "Fail: leading zeros eq"
-    print("OK: Comparisons")
-
-    # Тесты LongInteger
-    print("\n[LongInteger Tests]")
-    
-    # Сложение знаков
-    assert str(LongInteger("-5") + LongInteger("-3")) == "-8", "Fail: neg+neg"
-    assert str(LongInteger("10") + LongInteger("-3")) == "7", "Fail: pos+neg (result pos)"
-    assert str(LongInteger("3") + LongInteger("-10")) == "-7", "Fail: pos+neg (result neg)"
-    assert str(LongInteger("-5") + LongInteger("5")) == "0", "Fail: cancel to zero"
-    print("OK: Signed Addition")
-    
-    # Вычитание
-    assert str(LongInteger("10") - LongInteger("20")) == "-10", "Fail: pos - pos = neg"
-    assert str(LongInteger("-5") - LongInteger("-2")) == "-3", "Fail: neg - neg"
-    print("OK: Signed Subtraction")
-    
-    # Сравнение
-    assert (LongInteger("-10") < LongInteger("5")), "Fail: neg < pos"
-    assert (LongInteger("-20") < LongInteger("-10")), "Fail: neg < neg"
-    print("OK: Signed Comparisons")
-
-    print("\n--- Все тесты пройдены успешно ---")
+    def __mod__(self, other: Self) -> Self:
+        return self - (self // other) * other
 
 if __name__ == "__main__":
-    print(f"Visual Check 1: {LongNatural('8009') + LongNatural('9912')} == 17921")
-    print(f"Visual Check 2: {LongNatural('155555') * LongNatural('300')} == 46666500")
-    print(f"Visual Check 3: {LongNatural('9000') <= LongNatural('9000')} == True")
+    print(f"{LongNatural('123') + LongNatural('456')} | {123 + 456}")
+    print(f"{LongNatural('999') + LongNatural('1')} | {999 + 1}")
+    print(f"{LongNatural('0') + LongNatural('42')} | {0 + 42}")
+    print(f"{LongNatural('456') - LongNatural('123')} | {456 - 123}")
+    print(f"{LongNatural('1000') - LongNatural('1')} | {1000 - 1}")
+
+    print(f"{LongNatural('12') * LongNatural('34')} | {12 * 34}")
+    print(f"{LongNatural('0') * LongNatural('123')} | {0 * 123}")
+    print(f"{LongNatural('123456789') * LongNatural('987654321')} | {123456789 * 987654321}")
     
-    run_tests()
+    print(f"{LongNatural('10') // LongNatural('3')} | {10 // 3}")
+    print(f"{LongNatural('10') % LongNatural('3')} | {10 % 3}")
+    
+    print(f"{LongNatural('123') < LongNatural('456')} | {123 < 456}")
+    print(f"{LongNatural('123') == LongNatural('123')} | {123 == 123}")
+    
+
+    print(f"{LongInteger('10') + LongInteger('-3')} | {10 + (-3)}")
+    print(f"{LongInteger('-10') + LongInteger('3')} | {-10 + 3}")
+    print(f"{LongInteger('-10') + LongInteger('-20')} | {-10 + (-20)}")
+    print(f"{LongInteger('10') - LongInteger('3')} | {10 - 3}")
+    
+    print(f"{LongInteger('12') * LongInteger('3')} | {12 * 3}")
+    print(f"{LongInteger('-12') * LongInteger('3')} | {-12 * 3}")
+    print(f"{LongInteger('-12') * LongInteger('-3')} | {-12 * (-3)}")
+    
+    print(f"{LongInteger('10') // LongInteger('3')} | {10 // 3}")
+    print(f"{LongInteger('-10') // LongInteger('3')} | {-10 // 3}")
+    print(f"{LongInteger('10') % LongInteger('3')} | {10 % 3}")
+    print(f"{LongInteger('-10') % LongInteger('3')} | {-10 % 3}")
+    
+    print(f"{LongInteger('-5') < LongInteger('0')} | {-5 < 0}")
+    print(f"{LongInteger('100') > LongInteger('-100')} | {100 > -100}")
+    print(f"{LongNatural('9' * 20) + LongNatural('1')} | {int('9' * 20) + 1}")
+    print(f"{LongInteger('999999999999') * LongInteger('-111111111111')} | {999999999999 * (-111111111111)}")
