@@ -223,3 +223,6 @@ if __name__ == "__main__":
     print(f"{LongInteger('100') > LongInteger('-100')} | {100 > -100}")
     print(f"{LongNatural('9' * 20) + LongNatural('1')} | {int('9' * 20) + 1}")
     print(f"{LongInteger('999999999999') * LongInteger('-111111111111')} | {999999999999 * (-111111111111)}")
+
+
+    print(LongInteger("0") // LongInteger("0"))
