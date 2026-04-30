@@ -1,5 +1,5 @@
 from random import random
-from typing import List
+from typing import Callable, List, Self
 from rich.console import Console
 from rich.table import Table
 
@@ -14,7 +14,7 @@ class Animal:
         if self.move_callback: 
             self.move_callback(self, step)
 
-    def set_move_callback(self, move_collback):
+    def set_move_callback(self, move_collback: Callable[Self, float]):
         self.move_callback = move_collback
 
     def _get_random_coef(self, a=0.1) -> float:
@@ -223,7 +223,7 @@ class Race:
 
 
 if __name__ == "__main__":
-    participants: List[Animal] = [
+    animals: List[Animal] = [
         Horse("Буцефал", 23.5),
         Horse("Пегас", 27.9),
         Cheetah("Гром", 18.0, 46.5),
@@ -236,6 +236,6 @@ if __name__ == "__main__":
         Kangaroo("Рыжий", 23.0)
     ]
 
-    race = Race(animals=participants, distance=200.0)
+    race = Race(animals=animals, distance=200.0)
     winner = race.run()
     print(f"{winner.get_species().capitalize()} {winner.name} победил(а)!!!")
