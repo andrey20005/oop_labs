@@ -24,35 +24,6 @@ def to_deep_dict(obj):
 def obj_print(obj):
     pprint(to_deep_dict(obj))
 
-# class DebugPrintMixin:
-#     def p(self) -> str:
-#         # fields = ", ".join(f"{k}={v}" for k, v in self.__dict__.items())
-#         # print("------", self.__class__.__name__)
-#         fields: list[str] = []
-#         for k, v in self.__dict__.items():
-#             fields.append(f"{k}=")
-#             # print("- - - -", k, " ", v, " - - - ", isinstance(v, DebugPrintMixin))
-#             if isinstance(v, DebugPrintMixin):
-#                 fields[-1] += v.p()
-#             elif isinstance(v, list):
-#                 pass
-#             else:
-#                 fields[-1] += str(v)
-#         fields: str = ", ".join(fields)
-#         return f"{self.__class__.__name__}({fields})"
-
-#     def pc(self) -> str:
-#         blue, green, reset = "\033[94m", "\033[92m", "\033[0m"
-#         fields = ", ".join(f"{blue}{k}{reset}={green}{v}{reset}" for k, v in self.__dict__.items())
-#         return f"\033[95m{self.__class__.__name__}\033[0m({fields})"
-
-#     def pt(self) -> str:
-#         fields = ", \n".join(f"{k}={v}" for k, v in self.__dict__.items())
-#         return f"{self.__class__.__name__}( \n{tab(fields)} \n)"
-
-#     __str__ = p
-#     __repr__ = p
-
 
 def stat_to_modiff(stat: int) -> int:
     return (stat - 10) // 2
@@ -83,8 +54,11 @@ class DiceRoll:
         else:
             self.last += randint(1, self.sides)
         return self.last
-    
-    # def __str__(self):
-    #     blue, green, reset = "\033[94m", "\033[92m", "\033[0m"
-    #     fields = ", ".join(f"{blue}{k}{reset}={green}{v}{reset}" for k, v in self.__dict__.items())
-    #     return f"\033[95m{self.__class__.__name__}\033[0m({fields})"
+
+    def __str__(self):
+        res = []
+        if self.quality != 0:
+            res.append(f"q{["+", ""][self.quality < 0]}{self.quality}")
+        if self.modif != 0:
+            res.append(f"m{["+", ""][self.modif < 0]}{self.modif}")
+        return f"D{self.sides}({" ".join(res)})"

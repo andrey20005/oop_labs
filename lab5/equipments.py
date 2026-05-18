@@ -1,4 +1,6 @@
-from attacks import Attack, FireAttack, MissAttack, PhysicalAttack
+import random
+from attacks import Attack, FireAttack, MissAttack, PhysicalAttack, CuttingAttack
+from utils import stat_to_modiff
 
 
 class Equipment:
@@ -51,4 +53,28 @@ class EvasiveGear(Equipment):
         # Помеха на проверку попадания
         if isinstance(attack, MissAttack):
             attack.accuracy.disadvantage()
+
+
+class ParryArmor(Equipment):
+    def __init__(self):
+        super().__init__()
+        self.parry_threshold = 15
+        self.parry = False
+    
+    @property
+    def parry_dmg(self):
+        return self._parry 
+    
+    @parry_dmg.getter
+    def parry_dmg(self):
+        res = self._parry
+        self._parry = False
+        return res 
+
+    def protect(self, attack: Attack):
+        super().protect(attack)
+        if isinstance(attack, PhysicalAttack) and attack.is_active_phys():
+            if random.randint(0, 4) == 0:
+                attack.accuracy.disadvantage()
+                self.parry = True
 

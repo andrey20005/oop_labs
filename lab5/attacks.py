@@ -5,6 +5,9 @@ from utils import DiceRoll
 class Attack:
     def __init__(self):
         self.name = "empty"
+    
+    def __str__(self):
+        return f"{self.__class__.__name__}({", ".join(f"{k}: {v}" for k, v in vars(self).items())})"
 
 
 class MissAttack(Attack):
@@ -72,14 +75,3 @@ class FireAttack(MissAttack):
 
     def is_active_fire(self) -> bool:
         return self.is_active_miss() and self._fire_active
-
-
-class TestAttack1(FireAttack, StunAttack):
-    def __init__(self):
-        super().__init__()
-        self.name = "test attack 1"
-
-
-if __name__ == "__main__":
-    print(CuttingAttack())
-    print(TestAttack1())

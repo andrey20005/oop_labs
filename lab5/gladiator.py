@@ -7,6 +7,7 @@ from equipments import Equipment
 
 class BaseGladiator:
     def __init__(self):
+        self.name = "empty"
         self.hp = 20
         self.dexterity = 8
         self.strength = 8
@@ -131,3 +132,8 @@ class Gladiator(StunMixin, BurnMixin, BleedMixin, PhysicalDamageMixin, HitResolu
     
     def add_equipment(self, equipment):
         self.equipments.append(equipment)
+
+    def print(self):
+        print(f"{self.name}(dуxterity {self.dexterity}, strength {self.strength})")
+        print(f"hp {self.hp}{["", " горит"][self.burn_turns > 0]}{["", " оглушен"][self.stun_turns > 0]}")
+        print(f"equipments {", ".join(eq.__class__.__name__ for eq in self.equipments)}")
