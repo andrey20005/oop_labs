@@ -169,10 +169,6 @@ class Kangaroo(Animal):
         self.move(min(self.momentum + self.base_jump_speed, self.max_momentum) * self._get_random_coef(a=0.15))
 
 
-from typing import List
-from rich.console import Console
-from rich.table import Table
-
 class Race:
     def __init__(self, animals: List[Animal], distance: float = 200.0):
         self.animals = animals

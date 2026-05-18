@@ -2,3 +2,4 @@ target/
 debug/
 release/
 .venv
+__pycache__
